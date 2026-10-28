@@ -31,3 +31,11 @@ def settings_file() -> Path:
 
 def known_hosts_file() -> Path:
     return data_dir() / "known_hosts"
+
+
+def snippets_file() -> Path:
+    return config_dir() / "snippets.json"
+
+
+def history_file() -> Path:
+    return data_dir() / "history.json"

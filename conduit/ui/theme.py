@@ -376,6 +376,35 @@ def build_stylesheet(t: Theme) -> str:
         border: 1px solid {t.border};
         border-radius: 10px;
     }}
+    QFrame#pane {{
+        background: {t.window};
+        border: 1px solid {t.border};
+        border-radius: 6px;
+    }}
+    QFrame#pane[active="true"] {{ border: 1px solid {t.accent}; }}
+    QWidget#paneHeader {{
+        background: {t.surface_alt};
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+        border-bottom: 1px solid {t.border};
+    }}
+    QFrame#pane[active="true"] QWidget#paneHeader {{ background: {t.selection}; }}
+    QLabel#paneTitle {{ font-weight: 600; }}
+    QFrame#suggestPopup {{
+        background: {t.surface};
+        border: 1px solid {t.border};
+        border-radius: 8px;
+    }}
+    QFrame#suggestPopup QListWidget {{
+        background: transparent;
+        border: none;
+        padding: 2px;
+        outline: none;
+    }}
+    QFrame#suggestPopup QListWidget::item {{ padding: 4px 8px; border-radius: 5px; }}
+    QFrame#suggestPopup QListWidget::item:selected {{ background: {t.selection}; color: {t.text}; }}
+    QFrame#suggestPopup QLabel#hint {{ color: {t.text_muted}; padding: 2px 8px 4px 8px; }}
+    QWidget#paneHeader QToolButton {{ padding: 2px 4px; }}
     QDialogButtonBox QPushButton {{ min-width: 84px; }}
     """
 

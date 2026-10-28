@@ -12,11 +12,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from conduit.core.history import CommandHistory
 from conduit.core.models import Connection
 from conduit.core.paths import known_hosts_file
 from conduit.core.secrets import SecretStore
 from conduit.core.settings import Settings
+from conduit.core.snippets import SnippetStore
 from conduit.core.ssh_session import CredentialRequest, HostKeyRequest, SessionCredentials, SshSession, wait_for
+from conduit.ui.completer import TerminalCompleter
 from conduit.ui.dialogs import CredentialDialog, HostKeyDialog
 from conduit.ui.sftp_panel import SftpPanel
 from conduit.ui.terminal_widget import TerminalWidget
@@ -37,6 +40,8 @@ class SessionTab(QWidget):
         theme: Theme,
         *,
         credentials: SessionCredentials | None = None,
+        history: CommandHistory | None = None,
+        snippets: SnippetStore | None = None,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
@@ -44,6 +49,8 @@ class SessionTab(QWidget):
         self.settings = settings
         self.secrets = secrets
         self.theme = theme
+        self.history = history
+        self.snippets = snippets
         self.credentials = credentials or SessionCredentials()
         self.session: SshSession | None = None
         self.state = "disconnected"
@@ -79,11 +86,22 @@ class SessionTab(QWidget):
             copy_on_select=settings.copy_on_select,
             paste_on_right_click=settings.paste_on_right_click,
             cursor_blink=settings.cursor_blink,
+            clipboard_ctrl_keys=settings.clipboard_ctrl_keys,
         )
         self.terminal.data_to_send.connect(self._send)
         self.terminal.size_changed.connect(self._resized)
         self.terminal.title_changed.connect(self._remote_title_changed)
         self.splitter.addWidget(self.terminal)
+        self.completer: TerminalCompleter | None = None
+        if history is not None and snippets is not None:
+            self.completer = TerminalCompleter(
+                self.terminal,
+                history,
+                snippets,
+                self._open_sftp,
+                enabled=settings.suggestions_enabled,
+                min_chars=settings.suggestions_min_chars,
+            )
         self.sftp: SftpPanel | None = None
         layout.addWidget(self.splitter, 1)
         self._set_banner("", None)
@@ -131,6 +149,8 @@ class SessionTab(QWidget):
         self.start()
 
     def close_session(self) -> None:
+        if self.completer is not None:
+            self.completer.shutdown()
         if self.sftp is not None:
             self.sftp.stop()
         if self.session is not None:
@@ -180,9 +200,23 @@ class SessionTab(QWidget):
         self.terminal.paste_on_right_click = settings.paste_on_right_click
         self.terminal.set_cursor_blink(settings.cursor_blink)
         self.terminal.set_scrollback(settings.scrollback_lines)
+        self.terminal.clipboard_ctrl_keys = settings.clipboard_ctrl_keys
+        if self.completer is not None:
+            self.completer.set_enabled(settings.suggestions_enabled, settings.suggestions_min_chars)
+            self.completer.popup.retint(theme.text_muted)
         if self.sftp is not None:
             self.sftp.set_icon_color(theme.text_muted)
         self._apply_banner_style()
+
+    def insert_snippet(self, body: str, run: bool) -> None:
+        """Inserts snippet text at the prompt of this session."""
+        if self.completer is not None:
+            self.completer.insert_snippet(body, run)
+        else:
+            self.terminal.paste_text(body)
+            if run:
+                self._send(b"\r")
+        self.terminal.setFocus()
 
     # Internals -------------------------------------------------------------
 
@@ -240,6 +274,8 @@ class SessionTab(QWidget):
     def _on_connected(self) -> None:
         self._set_state("connected")
         self._set_banner("", None)
+        if self.completer is not None:
+            self.completer.set_connected(True)
         self.status_message.emit(f"Connected to {self.connection.display_target}")
         self._persist_remembered_secrets()
         if self.session is not None:
@@ -254,6 +290,8 @@ class SessionTab(QWidget):
         was_connected = self.state == "connected"
         self._set_state("disconnected")
         self.terminal.set_connected(False)
+        if self.completer is not None:
+            self.completer.set_connected(False)
         if self.sftp is not None:
             self.sftp.stop()
         if reason == "cancelled":

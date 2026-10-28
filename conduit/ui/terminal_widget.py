@@ -141,12 +141,54 @@ class _Screen(pyte.HistoryScreen):
     def bracketed_paste(self) -> bool:
         return BRACKETED_PASTE in self.mode
 
+    def resize(self, lines: int | None = None, columns: int | None = None) -> None:
+        """Resize like a real terminal: when the screen gets shorter, lines scroll into history so
+        the cursor stays visible (pyte would clip the top rows); when it gets taller, lines are pulled
+        back out of history. Columns are handled like pyte does."""
+        lines = lines or self.lines
+        columns = columns or self.columns
+        if lines == self.lines and columns == self.columns:
+            return
+        self.dirty.update(range(max(lines, self.lines)))
+        if lines < self.lines:
+            drop = self.lines - lines
+            scroll = min(drop, max(0, self.cursor.y - (lines - 1)))
+            if scroll and not self.in_alt_screen:
+                for y in range(scroll):
+                    self.history.top.append(self.buffer[y])
+            if scroll:
+                for y in range(scroll, self.lines):
+                    self.buffer[y - scroll] = self.buffer[y]
+                for y in range(self.lines - scroll, self.lines):
+                    self.buffer.pop(y, None)
+                self.cursor.y -= scroll
+            for y in range(lines, self.lines):
+                self.buffer.pop(y, None)
+            self.cursor.y = min(self.cursor.y, lines - 1)
+        elif lines > self.lines and not self.in_alt_screen and self.history.top:
+            pull = min(lines - self.lines, len(self.history.top))
+            for y in range(self.lines - 1, -1, -1):
+                self.buffer[y + pull] = self.buffer[y]
+            for y in range(pull - 1, -1, -1):
+                self.buffer[y] = self.history.top.pop()
+            self.cursor.y += pull
+        if columns < self.columns:
+            for line in self.buffer.values():
+                for x in range(columns, self.columns):
+                    line.pop(x, None)
+        self.lines, self.columns = lines, columns
+        self.set_margins()
+        if self.cursor.x >= columns:
+            self.cursor.x = columns - 1
+
 
 class TerminalWidget(QWidget):
     data_to_send = Signal(bytes)
     size_changed = Signal(int, int)  # cols, rows
     title_changed = Signal(str)
     bell = Signal()
+    output_received = Signal()  # screen content changed (after feed)
+    key_typed = Signal(bytes)  # bytes produced by a key press (not pastes)
 
     def __init__(
         self,
@@ -159,6 +201,7 @@ class TerminalWidget(QWidget):
         copy_on_select: bool = True,
         paste_on_right_click: bool = True,
         cursor_blink: bool = True,
+        clipboard_ctrl_keys: bool = True,
     ) -> None:
         super().__init__(parent)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -169,6 +212,7 @@ class TerminalWidget(QWidget):
 
         self.copy_on_select = copy_on_select
         self.paste_on_right_click = paste_on_right_click
+        self.clipboard_ctrl_keys = clipboard_ctrl_keys
         self._palette = palette
         self._scrollback = max(0, scrollback)
         self._cols, self._rows = 80, 24
@@ -266,6 +310,21 @@ class TerminalWidget(QWidget):
         self._update_scrollbar()
         if not self._repaint_timer.isActive():
             self._repaint_timer.start()
+        self.output_received.emit()
+
+    def cursor_row_text(self, *, up_to_cursor: bool = True) -> str:
+        """Text of the row the cursor is on (used for command suggestions)."""
+        y = self.screen.cursor.y
+        line = self.screen.buffer[y]
+        end = self.screen.cursor.x if up_to_cursor else self._cols
+        default_char = self.screen.default_char
+        return "".join(line.get(x, default_char).data or " " for x in range(end))
+
+    def cursor_global_pos(self) -> QPoint:
+        """Bottom-left screen position of the cursor cell (for popups)."""
+        cx = min(self.screen.cursor.x, self._cols - 1)
+        cy = self.screen.cursor.y
+        return self.mapToGlobal(QPoint(int(4 + cx * self._cell_w), int(2 + (cy + 1) * self._cell_h)))
 
     def write_message(self, text: str, *, color: int = 8) -> None:
         """Writes a locally generated status line (e.g. connection errors) to the screen."""
@@ -562,6 +621,17 @@ class TerminalWidget(QWidget):
         if ctrl and shift and key == Qt.Key.Key_V or (shift and key == Qt.Key.Key_Insert):
             self.paste()
             return
+        if self.clipboard_ctrl_keys and ctrl and not shift and not alt:
+            # VS Code style: Ctrl+C copies when something is selected, otherwise it is ^C for the
+            # shell; Ctrl+V always pastes.
+            if key == Qt.Key.Key_C and self._selection is not None:
+                self.copy_selection()
+                self._selection = None
+                self.update()
+                return
+            if key == Qt.Key.Key_V:
+                self.paste()
+                return
         if shift and key == Qt.Key.Key_PageUp:
             self.scroll_by(self._rows)
             return
@@ -580,6 +650,7 @@ class TerminalWidget(QWidget):
             event.ignore()
             return
         self._send(data)
+        self.key_typed.emit(data)
         self.scroll_to_bottom()
         self._selection = None
         event.accept()

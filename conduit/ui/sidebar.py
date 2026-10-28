@@ -28,6 +28,7 @@ ROLE_ID = Qt.ItemDataRole.UserRole + 1
 
 class Sidebar(QWidget):
     connect_requested = Signal(object)  # Connection
+    split_requested = Signal(object)  # Connection: open as a pane in the current tab
     edit_requested = Signal(object)  # Connection
     new_requested = Signal(str)  # group name
     delete_requested = Signal(object)  # Connection
@@ -169,7 +170,12 @@ class Sidebar(QWidget):
     def _activated(self, item: QTreeWidgetItem, _column: int) -> None:
         conn = self._connection_for(item)
         if conn is not None:
-            self.connect_requested.emit(conn)
+            from PySide6.QtWidgets import QApplication
+
+            if QApplication.keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier:
+                self.split_requested.emit(conn)
+            else:
+                self.connect_requested.emit(conn)
         else:
             item.setExpanded(not item.isExpanded())
 
@@ -193,8 +199,11 @@ class Sidebar(QWidget):
         menu = QMenu(self)
         conn = self._connection_for(item)
         if conn is not None:
-            connect_action = menu.addAction(icon("plug", self._icon_color), "Connect")
+            connect_action = menu.addAction(icon("plug", self._icon_color), "Connect in new tab")
             connect_action.triggered.connect(lambda: self.connect_requested.emit(conn))
+            split_action = menu.addAction(icon("split", self._icon_color), "Connect in split pane  (Shift+double-click)")
+            split_action.triggered.connect(lambda: self.split_requested.emit(conn))
+            menu.addSeparator()
             edit_action = menu.addAction(icon("edit", self._icon_color), "Edit...")
             edit_action.triggered.connect(lambda: self.edit_requested.emit(conn))
             dup_action = menu.addAction(icon("copy", self._icon_color), "Duplicate")

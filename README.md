@@ -21,13 +21,28 @@ Written in Python with PySide6 (Qt), paramiko and pyte. MIT licensed.
 - **Private keys in OpenSSH and PuTTY format.** `.ppk` files (version 2 and 3, encrypted or not)
   are loaded directly, so existing PuTTY keys keep working without conversion.
 - **Import your PuTTY sessions** from the registry (Windows) or `~/.putty/sessions`.
-- **Tabs**: several sessions side by side, with a status dot per tab and optional per-connection
-  colours.
+- **Tabs and split view**: every tab holds up to four sessions snapped into a grid, like Windows
+  Snap: one pane fills the tab, two sit side by side, three put one on the left and two stacked on
+  the right, four make a 2×2 grid. Splitters stay draggable, panes can be popped out into their own
+  tab or snapped back together. Status dot per tab and pane, optional per-connection colours.
+
+  ![Three sessions snapped into one tab](docs/split-view.png)
 - **Terminal emulator** with 256 and true colour, bold/italic/underline, scrollback, selection,
   copy on select, right-click paste (PuTTY style, switchable), bracketed paste, alternate screen for
   `vim`, `htop`, `less`, and window-title reporting.
 - **SFTP browser** next to the terminal (`Ctrl+Shift+F`): browse, download, upload (also by
   drag and drop from Explorer), rename, delete, create folders, with transfer progress.
+- **Clipboard like an editor**: `Ctrl+C` copies when text is selected and sends `^C` otherwise,
+  `Ctrl+V` pastes (VS Code behaviour, switchable in Settings). `Ctrl+Shift+C/V`, `Shift+Insert`,
+  middle click and right click keep working as well.
+- **Command suggestions** while you type: common Linux commands with a one-line description, your
+  own command history across all sessions, snippets, and file or directory names from the remote
+  working directory (read from the prompt, listed over SFTP). `→` (Right arrow) inserts the
+  selected suggestion, `Esc` hides the list, `Ctrl+Space` opens it on demand. `Tab` is never
+  touched: it always goes to the shell for its own file name completion.
+- **Snippets**: reusable command text (single or multi-line, optionally run immediately) that you
+  can insert into any session from the Snippets menu, the quick picker (`Ctrl+Shift+Space`) or by
+  typing the snippet name. Stored in `snippets.json` next to the connections.
 - **Host key verification** with an app-owned `known_hosts` file and a clear fingerprint dialog.
   Changed host keys are refused.
 - **Dark and light theme**, configurable font and scrollback, keep-alive, quick connect without
@@ -68,10 +83,17 @@ The result is in `dist\Conduit\`.
 | Quick connect (not saved) | `Ctrl+Shift+Q` |
 | Search connections | `Ctrl+Shift+K` |
 | Toggle SFTP browser | `Ctrl+Shift+F` |
-| Copy / paste in terminal | `Ctrl+Shift+C` / `Ctrl+Shift+V` (also `Shift+Insert`, middle click, right click) |
+| Copy / paste in terminal | `Ctrl+C` (with selection) / `Ctrl+V`, also `Ctrl+Shift+C` / `Ctrl+Shift+V`, `Shift+Insert`, middle click, right click |
+| Suggestions | `→` inserts, `Esc` hides, `Ctrl+Space` opens (or inserts when open), `Up` / `Down` select; `Tab` always goes to the shell |
+| Insert snippet / manage snippets | `Ctrl+Shift+Space` / `Ctrl+Shift+M` |
 | Scroll back | mouse wheel, `Shift+PageUp` / `Shift+PageDown` |
 | Reconnect | `Ctrl+Shift+R` |
-| Close tab | `Ctrl+Shift+W` |
+| Open a connection snapped into the current tab | `Shift` + double-click in the sidebar, or the context menu |
+| Duplicate the current session into a split pane | `Ctrl+Shift+D` |
+| Move the active pane to its own tab | `Ctrl+Shift+O` |
+| Snap all panes of this tab into the previous tab | `Ctrl+Shift+J` |
+| Focus pane left / right / up / down | `Alt+Shift+Arrow`, cycle with `Ctrl+Shift+E` |
+| Close the active pane | `Ctrl+Shift+W` |
 | Next / previous tab | `Ctrl+Tab` / `Ctrl+Shift+Tab` |
 | Toggle sidebar | `Ctrl+Shift+B` |
 | Switch theme | `Ctrl+Shift+T` |

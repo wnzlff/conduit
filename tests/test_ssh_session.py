@@ -51,12 +51,6 @@ class _Server(paramiko.ServerInterface):
         return True
 
 
-@pytest.fixture(scope="module")
-def qt_app():
-    app = QCoreApplication.instance() or QCoreApplication(sys.argv[:1])
-    yield app
-
-
 @pytest.fixture
 def ssh_server():
     """Starts a one-shot echo SSH server on a random localhost port."""

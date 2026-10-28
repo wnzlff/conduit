@@ -35,6 +35,9 @@ class Settings:
     window_state: str = ""
     sidebar_width: int = 260
     show_sftp_by_default: bool = False
+    clipboard_ctrl_keys: bool = True  # Ctrl+C copies a selection (else ^C), Ctrl+V pastes
+    suggestions_enabled: bool = True
+    suggestions_min_chars: int = 2
 
     def resolved_font_family(self) -> str:
         return self.font_family or _default_font()

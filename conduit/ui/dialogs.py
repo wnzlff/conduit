@@ -213,7 +213,14 @@ class SettingsDialog(QDialog):
         self.confirm_close.setChecked(settings.confirm_close_session)
         self.sftp_default = QCheckBox("Open the SFTP browser with every new session")
         self.sftp_default.setChecked(settings.show_sftp_by_default)
-        for box in (self.cursor_blink, self.copy_on_select, self.paste_right, self.confirm_close, self.sftp_default):
+        self.ctrl_keys = QCheckBox("Ctrl+C copies the selection (otherwise sends ^C), Ctrl+V pastes (VS Code style)")
+        self.ctrl_keys.setChecked(settings.clipboard_ctrl_keys)
+        self.suggestions = QCheckBox("Show command suggestions while typing (→ accepts, Esc hides, Ctrl+Space opens; Tab stays shell completion)")
+        self.suggestions.setChecked(settings.suggestions_enabled)
+        for box in (
+            self.cursor_blink, self.copy_on_select, self.paste_right, self.ctrl_keys, self.suggestions,
+            self.confirm_close, self.sftp_default,
+        ):
             layout.addWidget(box)
 
         buttons = QDialogButtonBox()
@@ -236,4 +243,6 @@ class SettingsDialog(QDialog):
         s.paste_on_right_click = self.paste_right.isChecked()
         s.confirm_close_session = self.confirm_close.isChecked()
         s.show_sftp_by_default = self.sftp_default.isChecked()
+        s.clipboard_ctrl_keys = self.ctrl_keys.isChecked()
+        s.suggestions_enabled = self.suggestions.isChecked()
         super().accept()
