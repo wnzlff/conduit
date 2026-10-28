@@ -40,6 +40,8 @@ Written in Python with PySide6 (Qt), paramiko and pyte. MIT licensed.
   working directory (read from the prompt, listed over SFTP). `→` (Right arrow) inserts the
   selected suggestion, `Esc` hides the list, `Ctrl+Space` opens it on demand. `Tab` is never
   touched: it always goes to the shell for its own file name completion.
+
+  ![Path suggestion taken from the remote working directory](docs/suggestions.png)
 - **Snippets**: reusable command text (single or multi-line, optionally run immediately) that you
   can insert into any session from the Snippets menu, the quick picker (`Ctrl+Shift+Space`) or by
   typing the snippet name. Stored in `snippets.json` next to the connections.

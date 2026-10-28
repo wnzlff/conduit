@@ -187,3 +187,4 @@ cython_debug/
 *.png
 !docs/*.png
 !conduit/assets/*.png
+!conduit.spec
