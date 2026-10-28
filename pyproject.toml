@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "conduit-ssh"
+version = "0.1.0"
+description = "A modern SSH client with saved connections, tabs and an SFTP browser."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Paul Wenzlaff" }]
+requires-python = ">=3.11"
+keywords = ["ssh", "sftp", "terminal", "putty", "qt", "pyside6"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: X11 Applications :: Qt",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Networking",
+    "Topic :: Terminals",
+]
+dependencies = [
+    "PySide6>=6.6",
+    "paramiko>=3.4",
+    "cryptography>=42",
+    "pyte>=0.8.2",
+    "keyring>=25",
+    "platformdirs>=4",
+    "argon2-cffi>=23",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pyinstaller>=6.6"]
+
+[project.urls]
+Homepage = "https://github.com/paulwenzlaff/conduit"
+Issues = "https://github.com/paulwenzlaff/conduit/issues"
+
+[project.scripts]
+conduit = "conduit.app:main"
+
+[project.gui-scripts]
+conduit-gui = "conduit.app:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["conduit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

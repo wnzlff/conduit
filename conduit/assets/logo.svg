@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b2338"/>
+      <stop offset="1" stop-color="#0d1019"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7dcfff"/>
+      <stop offset="1" stop-color="#7aa2f7"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#glow)"/>
+  <rect x="9.5" y="9.5" width="237" height="237" rx="55" fill="none" stroke="#2c3550" stroke-width="3"/>
+  <!-- the conduit: an open ring, like a C, drawn as a tube -->
+  <path d="M 176 72 A 68 68 0 1 0 176 184" fill="none" stroke="#0b0e16" stroke-opacity="0.55" stroke-width="40" stroke-linecap="round"/>
+  <path d="M 176 72 A 68 68 0 1 0 176 184" fill="none" stroke="url(#ring)" stroke-width="28" stroke-linecap="round"/>
+  <!-- terminal prompt chevron inside -->
+  <path d="M 112 98 L 146 128 L 112 158" fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- cursor block -->
+  <rect x="158" y="146" width="30" height="12" rx="4" fill="#ffffff"/>
+</svg>
